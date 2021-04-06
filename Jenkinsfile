@@ -1,43 +1,15 @@
 pipeline {
-    agent { label 'ltecomm'}
-    triggers {
-        cron('H * * * 1-5')
-    }
+    agent { label 'ltecomm' }
     stages {
-        stage('scm') {
+        stage('SCM') {
             steps {
-                git branch: 'developer', url:'https://github.com/KhajasCICDSamples/qt-gol.git'        
+                git 'https://github.com/wakaleo/game-of-life.git'
             }
         }
-        stage('build') {
+        stage('Build') {
             steps {
-                withSonarQubeEnv('SONAR-7.1') {
-                    sh script: 'mvn clean package sonar:sonar'
-
-                }
-                
+                sh 'mvn clean package'
             }
-        }
-        
-        stage('post build') {
-            steps {
-                junit 'gameoflife-web/target/surefire-reports/*.xml'
-                archiveArtifacts 'gameoflife-web/target/*.war'
-            }
-        }
-        stage("Quality Gate") {
-            steps {
-              timeout(time: 1, unit: 'HOURS') {
-                waitForQualityGate abortPipeline: true, credentialsId: 'SONAR_TOKEN'
-              }
-            }
-        }
-    }
-    post {
-        always {
-            mail to: 'learningthoughts.in@gmail.com', 
-                subject: "Status of pipeline ${currentBuild.fullDisplayName}",
-                body: "${env.BUILD_URL} has result ${currentBuild.result}"
         }
     }
 }
